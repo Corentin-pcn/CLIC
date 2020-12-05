@@ -11,17 +11,17 @@ engines ={ "LOX-RP1": {"stage": [1,2,3], "ISP": 330, "mean_ISP": 287, "index": 0
       
 configs = [
      ["Solid", "LOX-RP1"],
-    # ["Solid", "LOX-LK2"],
-     #["LOX-RP1", "LOX-RP1"],
-     #["LOX-RP1", "LOX-LK2"],
-     #["Solid", "LOX-RP1", "LOX-RP1"],
-     #["Solid", "LOX-RP1", "LOX-LK2"],
-     #["Solid", "LOX-LK2", "LOX-RP1"],
-     #["Solid", "LOX-LK2", "LOX-LK2"],
-     #["LOX-RP1", "LOX-RP1", "LOX-RP1"],
-     #["LOX-RP1", "LOX-RP1", "LOX-LK2"],
-     #["LOX-RP1", "LOX-LK2", "LOX-RP1"],
-    # ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
+     ["Solid", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1"],
+     ["LOX-RP1", "LOX-LK2"],
+     ["Solid", "LOX-RP1", "LOX-RP1"],
+     ["Solid", "LOX-RP1", "LOX-LK2"],
+     ["Solid", "LOX-LK2", "LOX-RP1"],
+     ["Solid", "LOX-LK2", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1", "LOX-RP1"],
+     ["LOX-RP1", "LOX-RP1", "LOX-LK2"],
+     ["LOX-RP1", "LOX-LK2", "LOX-RP1"],
+     ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
 ]
 
 
@@ -70,7 +70,7 @@ def Me(A,Mi,K):
 def Ms(K,Me):
   return([K[j]*Me[j] for j in np.arange(0,len(K))])
 
-def lagrange(b0,mu,Dvreq,configs):
+def lagrange(b0,mu,Dvreq,configs,engines):
     Aconf, bconf = [], []
     for config in configs :
       #print("\nConfiguration moteurs : ", config)
@@ -95,12 +95,12 @@ def lagrange(b0,mu,Dvreq,configs):
           for i in np.arange(linf,lsup+c,c):
               b = Bjs(i,omega,isp)
               dv = DV(b,isp)
-              if ( dv > Dvreq):
+              if (dv > Dvreq):
                   a = Ajs(b,kj)
                   mi = Mi(a,mu)
                   me = Me(a,mi,kj)
                   ms = Ms(kj,me)
-                  if (min(me) > 0 and min(ms) > 0 and mi[1] <= mi[0]-mi[1] and mi[0] < 1500000):
+                  if (min(me) > 0 and min(ms) > 0 and mi[1] <= mi[0]-mi[1] and mi[-1] <= mi[-2]-mi[-1] and mi[0] < 1500000):
                       B.append(b)
                       dV.append(dv)
                       MI.append(mi)
@@ -153,9 +153,9 @@ if zp==za : # circular orbit
   vp = np.sqrt(muE / (RE + zp)) *1000  # in m/s
 else : # not circular orbit 
   a = RE + (zp + za)/2
-  vp = np.sqrt(muE * (2 / (RE + zp) - 1 / a))
+  vp = np.sqrt(muE * (2 / (RE + zp) - 1 / a))*1000
 
-vi = OE * RE *  np.cos(np.deg2rad(LPlat)) * np.sin(azi) * 1000
+vi = OE * RE *  np.cos(np.deg2rad(LPlat)) * np.sin(np.deg2rad(azi)) * 1000
 Dvreq = vp - vi + loss
 
 print("speeds : ")
@@ -167,7 +167,7 @@ print(f"\t Delta_V required : {Dvreq} m/s")
 
 b0 = 2
 
-L = lagrange(b0,mu,Dvreq,configs)
+L = lagrange(b0,mu,Dvreq,configs,engines)
 
 
 """a = 1.5
