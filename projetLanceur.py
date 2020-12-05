@@ -1,34 +1,33 @@
 import numpy as np
 
+g0 = 9.80665
 RE = 6378.137
-mu = 3.986005*(10**5)
-OE = 6.300387486749/(24*60*60)
-g = 9.80665
-
-#format matrices caracteristique : [1,2,3]
+OE = 6.300387486749 / (86400)
+mu = 3.986005e5
 
 engines ={ "LOX-RP1": {"stage": [1,2,3], "ISP": 330, "mean_ISP": 287, "index": 0.15},
            "LOX-LK2": {"stage": [2,3], "ISP": 440, "mean_ISP": np.nan, "index": 0.22},
            "Solid": {"stage": [1], "ISP": 300, "mean_ISP": 260, "index": 0.10} }
       
 configs = [
-    ["Solid", "LOX-RP1"],
-#    ["Solid", "LOX-LK2"],
-#    ["LOX-RP1", "LOX-RP1"],
-#    ["LOX-RP1", "LOX-LK2"],
-#    ["Solid", "LOX-RP1", "LOX-RP1"],
-#    ["Solid", "LOX-RP1", "LOX-LK2"],
-#    ["Solid", "LOX-LK2", "LOX-RP1"],
-#    ["Solid", "LOX-LK2", "LOX-LK2"],
-#    ["LOX-RP1", "LOX-RP1", "LOX-RP1"],
-#    ["LOX-RP1", "LOX-RP1", "LOX-LK2"],
-#    ["LOX-RP1", "LOX-LK2", "LOX-RP1"],
-#    ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
+     ["Solid", "LOX-RP1"],
+     ["Solid", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1"],
+     ["LOX-RP1", "LOX-LK2"],
+     ["Solid", "LOX-RP1", "LOX-RP1"],
+     ["Solid", "LOX-RP1", "LOX-LK2"],
+     ["Solid", "LOX-LK2", "LOX-RP1"],
+     ["Solid", "LOX-LK2", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1", "LOX-RP1"],
+     ["LOX-RP1", "LOX-RP1", "LOX-LK2"],
+     ["LOX-RP1", "LOX-LK2", "LOX-RP1"],
+     ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
 ]
+
 
 def losses(z):
     return 2.452*(10**(-3))*(z**2) + 1.051*z + 1387.5
-  
+
 def azimut(i,phi):
   i = np.deg2rad(i)
   phi = np.deg2rad(phi)
@@ -56,27 +55,14 @@ def Bjs(bn,O,ISP):
 def Ajs(B,K):
   return([((1 + K[j])/B[j])-K[j] for j in np.arange(0,len(K))])
 
-def Mi(A,K,mu,O): 
-  if len(O) == 2:
-      Mi = [0,mu/A[-1]]
-  elif len(O) == 3:
-      Mi = [0,0,mu/A[-1]]
-  for j in np.arange(len(O)-2,-1,-1):
-    Mi[j] = Mi[j+1]/A[j]
-  return(Mi)
-
-def Me(A,Mi,K,Oi):
-  return([((1-A[j])/(1 + K[j]))*Mi[j] for j in np.arange(0,len(Oi))])
 
 def Ms(K,Me):
   return([K[j]*Me[j] for j in np.arange(0,len(K))])
 
-
-
-
 def lagrange(b0,mu,Dvreq):
+  Aconf, bconf = [], []
   for config in configs :
-    print("\nConfiguration moteurs : ", config)
+    #print("\nConfiguration moteurs : ", config)
     isp = []
     kj = []
     nb_stage = len(config)
@@ -104,8 +90,18 @@ def lagrange(b0,mu,Dvreq):
         
         if err < 0.1 and dv != np.nan : 
             a = Ajs(b,kj)
-            mi = Mi(a,kj,mu,omega)
-            me = Me(a,mi,kj,omega)
+            mi = [0 for i in range (nb_stage)]
+            me = [0 for i in range (nb_stage)]
+
+            for k in reversed(range (nb_stage)) : 
+              if k == nb_stage-1:
+                mi[k] = mass_u/a[k]
+              else:
+                mi[k] = mi[k+1] / a[k]
+           
+            for k in range(nb_stage):
+              me[k] = (1-a[k])/(1+kj[k])*mi[k]
+
             ms = Ms(kj,me)
             break
         
@@ -120,51 +116,61 @@ def lagrange(b0,mu,Dvreq):
                 b0 = tmp
 
         if n_iter > 1000:
-            print("Not possible")
+            #print("Not possible")
             break
-    
-  print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dv} m/s")
-  print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {b} \n Mej : {me}\n Msj : {ms}")
+    Aconf.append(sum(mi))
+    bconf.append((dv,b,mi,me,ms,n_iter,err))
+  Aconf = np.array(Aconf)
+  min = np.where(Aconf == np.amin(Aconf))
+  dv,b,mi,me,ms,n_iter,err = bconf[int(min[0][0])]
+
+  print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dv} m/s  (found in {n_iter} iterations, with error = {err}). ")
+  print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {mi} \n Mej : {me}\n Msj : {ms}")
   return(mi,me,ms,dv)
 
 
+missions ={ "1": {"zp": 410, "za": 410, "i": 51.6, "mu": 32000, "LPlat": 45.6},
+           "2": {"zp": 340, "za": 340, "i": 90, "mu": 290, "LPlat": 34.7},
+           "3": {"zp": 200, "za": 35786, "i": 5.2, "mu": 3800, "LPlat": 5.2},
+           "4": {"zp": 567, "za": 567, "i": 97.6, "mu": 1150, "LPlat": 28.5}}
 
-LaunchP = {'Baikonur':45.6, 'Vandenberg':34.7, 'Kourou':5.2,'Cap Canaveral':28.5}
+choice = ""
+choice = input("Enter the mission number of your choice (1,2,3,4) : ")
 
-LaunchPchoice = 'Vandenberg'
-i = 90
-za = 340
-zp = 340
-mu = 290
-LPlat = LaunchP[LaunchPchoice]
+zp = missions[choice]["zp"]
+za = missions[choice]["za"]
+i = missions[choice]["i"]
+mass_u = missions[choice]["mu"]
+LPlat = missions[choice]["LPlat"]
 
-azi = np.rad2deg(np.arcsin(np.cos(np.deg2rad(i))/np.cos(np.deg2rad(LPlat))))
-if azi < 10**(-10):
-    azi = 0
 
-print("azimut : ",azi)
+loss = losses(zp)
+print("loss : ", loss)
+azi = azimut(i, LPlat)
+print("azimut : ", azi)
+ 
+if zp==za : # circular orbit 
+  vp = np.sqrt(mu / (RE + zp)) *1000  # in m/s
+else : # not circular orbit 
+  a = RE + (zp + za)/2
+  vp = np.sqrt(mu * (2 / (RE + zp) - 1 / a))
 
-a = za + zp + 2*RE
+vi = OE * RE *  np.cos(np.deg2rad(LPlat)) * np.sin(azi) * 1000
+Dvreq = vp - vi + loss
 
-vp = np.sqrt(mu*((2/(zp+RE))-(1/a)))
-print("injection speed : ",round(vp*1000,2)," m/s")
+print("speeds : ")
+print(f"\t injection speed : {vp} m/s")
+print(f"\t initial velocity : {vi} m/s")
+print(f"\t Delta_V required : {Dvreq} m/s")
 
-los = losses(zp)
-print("losses : ",round(los,2)," m/s")
-
-vi = OE*RE*np.cos(np.deg2rad(LPlat)*np.sin(np.deg2rad(azi)))
-print("vitesse initiale : ",round(vi,2)," m/s")
-
-Dvreq = vp - vi + los
-print("Dv required : ", round(Dvreq,2), " m/s")
-
-#Optimal Staging
+#Optimal staging
 
 b0 = 2
 L = lagrange(b0,mu,Dvreq)
 
-"""
-a = 1.5
+
+
+"""a = 1.5
 b = 10.0
 c = 0.5
 Dv = 10000
@@ -186,12 +192,3 @@ while (Dv-Dvreq >= 100 and c > 0.0001):
 
 print(mi)
 print(Dv)"""
-
-
-
-
-
-
-
-
-
