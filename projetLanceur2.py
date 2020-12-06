@@ -10,18 +10,18 @@ engines ={ "LOX-RP1": {"stage": [1,2,3], "ISP": 330, "mean_ISP": 287, "index": 0
            "Solid": {"stage": [1], "ISP": 300, "mean_ISP": 260, "index": 0.10} }
       
 configs = [
-     #["Solid", "LOX-RP1"],
-     #["Solid", "LOX-LK2"],
-     #["LOX-RP1", "LOX-RP1"],
-     #["LOX-RP1", "LOX-LK2"],
-     #["Solid", "LOX-RP1", "LOX-RP1"],
+     ["Solid", "LOX-RP1"],
+     ["Solid", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1"],
+     ["LOX-RP1", "LOX-LK2"],
+     ["Solid", "LOX-RP1", "LOX-RP1"],
      ["Solid", "LOX-RP1", "LOX-LK2"],
      ["Solid", "LOX-LK2", "LOX-RP1"],
-     #["Solid", "LOX-LK2", "LOX-LK2"],
-     #["LOX-RP1", "LOX-RP1", "LOX-RP1"],
+     ["Solid", "LOX-LK2", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1", "LOX-RP1"],
      ["LOX-RP1", "LOX-RP1", "LOX-LK2"],
      ["LOX-RP1", "LOX-LK2", "LOX-RP1"],
-     #["LOX-RP1", "LOX-LK2", "LOX-LK2"]
+     ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
 ]
 
 
