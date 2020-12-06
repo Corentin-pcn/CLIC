@@ -10,18 +10,18 @@ engines ={ "LOX-RP1": {"stage": [1,2,3], "ISP": 330, "mean_ISP": 287, "index": 0
            "Solid": {"stage": [1], "ISP": 300, "mean_ISP": 260, "index": 0.10} }
       
 configs = [
-     ["Solid", "LOX-RP1"],
-     ["Solid", "LOX-LK2"],
-     ["LOX-RP1", "LOX-RP1"],
-     ["LOX-RP1", "LOX-LK2"],
-     ["Solid", "LOX-RP1", "LOX-RP1"],
+     #["Solid", "LOX-RP1"],
+     #["Solid", "LOX-LK2"],
+     #["LOX-RP1", "LOX-RP1"],
+     #["LOX-RP1", "LOX-LK2"],
+     #["Solid", "LOX-RP1", "LOX-RP1"],
      ["Solid", "LOX-RP1", "LOX-LK2"],
      ["Solid", "LOX-LK2", "LOX-RP1"],
-     ["Solid", "LOX-LK2", "LOX-LK2"],
-     ["LOX-RP1", "LOX-RP1", "LOX-RP1"],
+     #["Solid", "LOX-LK2", "LOX-LK2"],
+     #["LOX-RP1", "LOX-RP1", "LOX-RP1"],
      ["LOX-RP1", "LOX-RP1", "LOX-LK2"],
      ["LOX-RP1", "LOX-LK2", "LOX-RP1"],
-     ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
+     #["LOX-RP1", "LOX-LK2", "LOX-LK2"]
 ]
 
 
@@ -70,7 +70,15 @@ def Me(A,Mi,K):
 def Ms(K,Me):
   return([K[j]*Me[j] for j in np.arange(0,len(K))])
 
-def lagrange(b0,mu,Dvreq,configs,engines):
+def lagrange(b0,mu,Dvreq,configs,engines,n):
+    if n == 1:
+        configs = [["Solid", "LOX-RP1", "LOX-LK2"],["Solid", "LOX-LK2", "LOX-RP1"],
+                   ["LOX-RP1", "LOX-RP1", "LOX-LK2"],["LOX-RP1", "LOX-LK2", "LOX-RP1"]]
+    if n == 3:
+        configs = configs[4:-1]
+    elif n == 2:
+        configs.pop(7)
+        configs.pop(-1)
     Aconf, bconf = [], []
     for config in configs :
       #print("\nConfiguration moteurs : ", config)
@@ -89,6 +97,9 @@ def lagrange(b0,mu,Dvreq,configs,engines):
       linf = 1
       lsup = 10
       c = 0.5
+      if n == 1:
+          lsup = 3.5
+          c = 0.05
       dv = Dvreq + 1000
       while c > 0.000001 or dv-Dvreq > 100:
           B, dV, MI = [], [], []
@@ -116,7 +127,7 @@ def lagrange(b0,mu,Dvreq,configs,engines):
               c /= 2
           else:
               c /= 2
-      Aconf.append(sum(mi))
+      Aconf.append(mi[0])
       bconf.append((dv,b,mi,me,ms,omega,kj,isp))
     Aconf = np.array(Aconf)
     mini = np.where(Aconf == np.amin(Aconf))
@@ -167,7 +178,7 @@ print(f"\t Delta_V required : {Dvreq} m/s")
 
 b0 = 2
 
-L = lagrange(b0,mu,Dvreq,configs,engines)
+L = lagrange(b0,mu,Dvreq,configs,engines,int(choice))
 
 
 """a = 1.5
