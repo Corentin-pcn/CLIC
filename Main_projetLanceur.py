@@ -38,10 +38,7 @@ def Oi(K):
 
 def DV(B,ISP):
     g = 9.80665
-    dv = 0
-    for j in range(0,len(B)):
-      dv += g*ISP[j]*np.log(B[j])
-    return dv
+    return [g*ISP[j]*np.log(B[j]) for j in range(0,len(B))]
 
 def Bjs(bn,O,ISP):
     if len(O) == 2:
@@ -105,7 +102,8 @@ def lagrange(b0,mu,Dvreq,configs,engines,n):
           B, dV, MI = [], [], []
           for i in np.arange(linf,lsup+c,c):
               b = Bjs(i,omega,isp)
-              dv = DV(b,isp)
+              dvdet = DV(b,isp)
+              dv = np.sum(dvdet)
               if (dv > Dvreq):
                   a = Ajs(b,kj)
                   mi = Mi(a,mu)
@@ -128,22 +126,22 @@ def lagrange(b0,mu,Dvreq,configs,engines,n):
           else:
               c /= 2
       Aconf.append(np.sum(me))
-      bconf.append((omega,kj,isp,dv,b,mi,me,ms))
+      bconf.append((omega,kj,isp,dv,dvdet,b,mi,me,ms))
     Aconf = np.array(Aconf)
     mini = np.where(Aconf == np.amin(Aconf))
-    omega,kj,isp,dv,b,mi,me,ms = bconf[int(mini[0][0])]
+    omega,kj,isp,dv,dvdet,b,mi,me,ms = bconf[int(mini[0][0])]
     sme = np.sum(me)
     sms = np.sum(ms)
     print("\nBEST CONFIGURATION\n")
-    print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dv} m/s")
+    print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dvdet} m/s : {dv}")
     print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {mi} \n Mej : {me} : {sme}\n Msj : {ms} : {sms}\n")
     bconf.pop(int(mini[0][0]))
     print("OTHER CONFIGURATIONS\n")
     for i in bconf:
-        omega,kj,isp,dv,b,mi,me,ms = i
+        omega,kj,isp,dv,dvdet,b,mi,me,ms = i
         sme = np.sum(me)
         sms = np.sum(ms)
-        print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dv} m/s")
+        print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dvdet} m/s : {dv}")
         print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {mi} \n Mej : {me} : {sme}\n Msj : {ms} : {sms}\n")
     return(bconf)
 
