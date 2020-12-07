@@ -10,18 +10,18 @@ engines ={ "LOX-RP1": {"stage": [1,2,3], "ISP": 330, "mean_ISP": 287, "index": 0
            "Solid": {"stage": [1], "ISP": 300, "mean_ISP": 260, "index": 0.10} }
       
 configs = [
-     #["Solid", "LOX-RP1"],
-     #["Solid", "LOX-LK2"],
-     #["LOX-RP1", "LOX-RP1"],
-     #["LOX-RP1", "LOX-LK2"],
-     #["Solid", "LOX-RP1", "LOX-RP1"],
+     ["Solid", "LOX-RP1"],
+     ["Solid", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1"],
+     ["LOX-RP1", "LOX-LK2"],
+     ["Solid", "LOX-RP1", "LOX-RP1"],
      ["Solid", "LOX-RP1", "LOX-LK2"],
      ["Solid", "LOX-LK2", "LOX-RP1"],
-     #["Solid", "LOX-LK2", "LOX-LK2"],
-     #["LOX-RP1", "LOX-RP1", "LOX-RP1"],
+     ["Solid", "LOX-LK2", "LOX-LK2"],
+     ["LOX-RP1", "LOX-RP1", "LOX-RP1"],
      ["LOX-RP1", "LOX-RP1", "LOX-LK2"],
      ["LOX-RP1", "LOX-LK2", "LOX-RP1"],
-     #["LOX-RP1", "LOX-LK2", "LOX-LK2"]
+     ["LOX-RP1", "LOX-LK2", "LOX-LK2"]
 ]
 
 
@@ -127,14 +127,25 @@ def lagrange(b0,mu,Dvreq,configs,engines,n):
               c /= 2
           else:
               c /= 2
-      Aconf.append(mi[0])
-      bconf.append((dv,b,mi,me,ms,omega,kj,isp))
+      Aconf.append(np.sum(me))
+      bconf.append((omega,kj,isp,dv,b,mi,me,ms))
     Aconf = np.array(Aconf)
     mini = np.where(Aconf == np.amin(Aconf))
-    dv,b,mi,me,ms,omega,kj,isp = bconf[int(mini[0][0])]
+    omega,kj,isp,dv,b,mi,me,ms = bconf[int(mini[0][0])]
+    sme = np.sum(me)
+    sms = np.sum(ms)
+    print("\nBEST CONFIGURATION\n")
     print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dv} m/s")
-    print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {mi} \n Mej : {me}\n Msj : {ms}")
-    return(1)
+    print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {mi} \n Mej : {me} : {sme}\n Msj : {ms} : {sms}\n")
+    bconf.pop(int(mini[0][0]))
+    print("OTHER CONFIGURATIONS\n")
+    for i in bconf:
+        omega,kj,isp,dv,b,mi,me,ms = i
+        sme = np.sum(me)
+        sms = np.sum(ms)
+        print(f"\n Omega : {omega} \n Isp : {isp} \n Kj : {kj} \n Dv : {dv} m/s")
+        print(f"\n Aj : {a}\n Bj : {b}  \n Mi : {mi} \n Mej : {me} : {sme}\n Msj : {ms} : {sms}\n")
+    return(bconf)
 
 
 LaunchP = {'Baikonur':45.6, 'Vandenberg':34.7, 'Kourou':5.2,'Cap Canaveral':28.5}
@@ -179,8 +190,11 @@ print(f"\t Delta_V required : {Dvreq} m/s")
 b0 = 2
 
 L = lagrange(b0,mu,Dvreq,configs,engines,int(choice))
+name = ["omega","kj","isp","dv","b","mi","me","ms"]
 
-
+        
+        
+        
 """a = 1.5
 b = 10.0
 c = 0.5
