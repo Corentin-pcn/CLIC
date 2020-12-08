@@ -1,4 +1,4 @@
 # CLIC
 Conception Lanceurs IPSA Company
 
-![CLIC_Logo](CLIC.png)
+<img src="CLIC.png" width=300>
